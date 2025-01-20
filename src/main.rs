@@ -22,7 +22,10 @@ fn handle_stream(mut stream: TcpStream) {
         .take_while(|line| !line.is_empty())
         .collect();
     println!("Req: {lines:#?}");
+    send_response(&mut stream);
+}
 
+fn send_response(stream: &mut TcpStream) {
     let status_line = "HTTP/1.1 200 OK";
     let body = read_to_string("hello.html").unwrap();
     let length = body.len();
