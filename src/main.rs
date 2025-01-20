@@ -19,7 +19,7 @@ fn main() {
 fn handle_stream(mut stream: TcpStream) {
     let lines = read_lines(&stream);
     println!("Req: {lines:#?}");
-    send_response(&mut stream);
+    send_response(&mut stream, &StatusCode::Ok);
 }
 
 fn read_lines(stream: &TcpStream) -> Vec<String> {
@@ -31,12 +31,31 @@ fn read_lines(stream: &TcpStream) -> Vec<String> {
         .collect()
 }
 
-fn send_response(stream: &mut TcpStream) {
-    let status_line = "HTTP/1.1 200 OK";
+fn send_response(stream: &mut TcpStream, status_code: &StatusCode) {
+    let status_line = format!("HTTP/1.1 {} {}", status_code.num(), status_code.text());
     let body = read_to_string("hello.html").unwrap();
     let length = body.len();
 
     let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{body}");
 
     stream.write_all(response.as_bytes()).unwrap();
+}
+
+enum StatusCode {
+    Ok,
+}
+
+impl StatusCode {
+    fn num(&self) -> u32 {
+        match self {
+            Self::Ok => 200,
+        }
+    }
+
+    fn text(&self) -> String {
+        match self {
+            Self::Ok => "OK",
+        }
+        .into()
+    }
 }
