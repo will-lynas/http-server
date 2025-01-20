@@ -19,6 +19,7 @@ fn main() {
 fn handle_stream(mut stream: TcpStream) {
     let lines = read_lines(&stream);
     println!("Req: {lines:#?}");
+    let _req = Request::parse(lines);
     let res = Response {
         status_code: StatusCode::Ok,
         body: read_to_string("hello.html").unwrap(),
@@ -33,6 +34,27 @@ fn read_lines(stream: &TcpStream) -> Vec<String> {
         .map(|res| res.unwrap())
         .take_while(|line| !line.is_empty())
         .collect()
+}
+
+#[allow(dead_code)]
+struct Request {
+    resource: String,
+    method: Method,
+}
+
+impl Request {
+    fn parse(lines: Vec<String>) -> Self {
+        let first = lines.into_iter().next().unwrap();
+        let resource = first.split_whitespace().nth(1).unwrap();
+        Self {
+            resource: resource.into(),
+            method: Method::Get,
+        }
+    }
+}
+
+enum Method {
+    Get,
 }
 
 struct Response {
