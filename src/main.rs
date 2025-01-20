@@ -19,7 +19,11 @@ fn main() {
 fn handle_stream(mut stream: TcpStream) {
     let lines = read_lines(&stream);
     println!("Req: {lines:#?}");
-    send_response(&mut stream, &StatusCode::Ok);
+    let res = Response {
+        status_code: StatusCode::Ok,
+        body: read_to_string("hello.html").unwrap(),
+    };
+    res.send(&mut stream);
 }
 
 fn read_lines(stream: &TcpStream) -> Vec<String> {
@@ -31,14 +35,27 @@ fn read_lines(stream: &TcpStream) -> Vec<String> {
         .collect()
 }
 
-fn send_response(stream: &mut TcpStream, status_code: &StatusCode) {
-    let status_line = format!("HTTP/1.1 {} {}", status_code.num(), status_code.text());
-    let body = read_to_string("hello.html").unwrap();
-    let length = body.len();
+struct Response {
+    status_code: StatusCode,
+    body: String,
+}
 
-    let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{body}");
+impl Response {
+    fn send(&self, stream: &mut TcpStream) {
+        let status_line = format!(
+            "HTTP/1.1 {} {}",
+            self.status_code.num(),
+            self.status_code.text()
+        );
+        let length = self.body.len();
 
-    stream.write_all(response.as_bytes()).unwrap();
+        let response = format!(
+            "{status_line}\r\nContent-Length: {length}\r\n\r\n{}",
+            self.body
+        );
+
+        stream.write_all(response.as_bytes()).unwrap();
+    }
 }
 
 enum StatusCode {
