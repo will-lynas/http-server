@@ -19,12 +19,19 @@ fn main() {
 fn handle_stream(mut stream: TcpStream) {
     let lines = read_lines(&stream);
     println!("Req: {lines:#?}");
-    let _req = Request::parse(lines);
-    let res = Response {
-        status_code: StatusCode::Ok,
-        body: read_to_string("hello.html").unwrap(),
+    let request = Request::parse(lines);
+    let response = if request.resource == "/" && request.method == Method::Get {
+        Response {
+            status_code: StatusCode::Ok,
+            body: read_to_string("hello.html").unwrap(),
+        }
+    } else {
+        Response {
+            status_code: StatusCode::NotFound,
+            body: "Not Found!".into(),
+        }
     };
-    res.send(&mut stream);
+    response.send(&mut stream);
 }
 
 fn read_lines(stream: &TcpStream) -> Vec<String> {
@@ -36,7 +43,6 @@ fn read_lines(stream: &TcpStream) -> Vec<String> {
         .collect()
 }
 
-#[allow(dead_code)]
 struct Request {
     resource: String,
     method: Method,
@@ -53,6 +59,7 @@ impl Request {
     }
 }
 
+#[derive(PartialEq)]
 enum Method {
     Get,
 }
@@ -82,18 +89,21 @@ impl Response {
 
 enum StatusCode {
     Ok,
+    NotFound,
 }
 
 impl StatusCode {
     fn num(&self) -> u32 {
         match self {
             Self::Ok => 200,
+            Self::NotFound => 404,
         }
     }
 
     fn text(&self) -> String {
         match self {
             Self::Ok => "OK",
+            Self::NotFound => "Not Found",
         }
         .into()
     }
