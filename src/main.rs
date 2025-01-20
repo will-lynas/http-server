@@ -13,7 +13,7 @@ fn main() {
     }
 }
 
-fn handle_stream(stream: TcpStream) {
+fn handle_stream(mut stream: TcpStream) {
     let buf_reader = BufReader::new(&stream);
     let lines: Vec<_> = buf_reader
         .lines()
@@ -21,4 +21,8 @@ fn handle_stream(stream: TcpStream) {
         .take_while(|line| !line.is_empty())
         .collect();
     println!("Req: {lines:#?}");
+
+    let response = "HTTP/1.1 200 OK\r\n\r\n";
+
+    stream.write_all(response.as_bytes()).unwrap();
 }
