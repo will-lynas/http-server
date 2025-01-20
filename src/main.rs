@@ -15,14 +15,18 @@ fn main() {
 }
 
 fn handle_stream(mut stream: TcpStream) {
-    let buf_reader = BufReader::new(&stream);
-    let lines: Vec<_> = buf_reader
+    let lines = read_lines(&stream);
+    println!("Req: {lines:#?}");
+    send_response(&mut stream);
+}
+
+fn read_lines(stream: &TcpStream) -> Vec<String> {
+    let buf_reader = BufReader::new(stream);
+    buf_reader
         .lines()
         .map(|res| res.unwrap())
         .take_while(|line| !line.is_empty())
-        .collect();
-    println!("Req: {lines:#?}");
-    send_response(&mut stream);
+        .collect()
 }
 
 fn send_response(stream: &mut TcpStream) {
